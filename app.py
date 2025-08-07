@@ -1,228 +1,233 @@
 import streamlit as st
-import boto3
-import os
-from dotenv import load_dotenv
-# from streamlit_login_auth_ui.widgets import __login__
-
-# Load environment variables
-load_dotenv()
 
 # Setup
 st.set_page_config(
-    page_title="Caly Poly Math Placement Chatbot", 
-    page_icon="🧮",  # Change icon here
-    layout="wide"
+    page_title="Mr. Mini Clint Bot", 
+    page_icon="🤖",
+    layout="centered"
 )
 
-# Custom CSS for colors
+# Custom CSS
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Georgia:wght@400;700&display=swap');
     
     .stApp {
+        background-color: #F8F8F8;
+        font-family: 'Georgia', serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .main-container {
+        width: 100%;
+        max-width: 400px;
+        aspect-ratio: 9/16;
         background-color: white;
-        font-family: 'Poppins', sans-serif;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
-    * {
-        font-family: 'Poppins', sans-serif !important;
+    
+    .header {
+        background-color: #154734;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        font-family: 'Oswald', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
-    .stChatMessage {
-        background-color: #f8f9fa;
-        color: black !important;
-        max-width: 800px !important;
-        margin: 0 auto !important;
+    
+    .chat-area {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
     }
-    .stChatMessage p {
-        color: black !important;
+    
+    .bot-message {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
     }
-    .stChatMessage div {
-        color: black !important;
+    
+    .user-message {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        flex-direction: row-reverse;
     }
-    .stTextInput > div > div > input {
-        background-color: white;
+    
+    .bot-bubble {
+        background-color: #154734;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 18px 18px 18px 4px;
+        max-width: 70%;
+        font-family: 'Georgia', serif;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    .user-bubble {
+        background-color: #e0e0e0;
         color: black;
+        padding: 12px 16px;
+        border-radius: 18px 18px 4px 18px;
+        max-width: 70%;
+        font-family: 'Georgia', serif;
+        font-size: 14px;
+        line-height: 1.4;
     }
-    .stChatInput {
-        max-width: 800px !important;
-        margin: 0 auto !important;
-        background-color: #4A8B6B !important;
-        border-radius: 10px !important;
-        padding: 10px !important;
+    
+    .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        overflow: hidden;
+        background-color: #C69214;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .stChatInput > div {
-        max-width: 800px !important;
-        margin: 0 auto !important;
+    
+    .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
-    .stChatInput input {
+    
+    .input-area {
+        padding: 15px 20px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .stTextInput > div > div > input {
         background-color: white !important;
         color: black !important;
-        border: none !important;
+        font-family: 'Georgia', serif !important;
+        border: 2px solid #154734 !important;
         border-radius: 20px !important;
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+        width: 100% !important;
     }
-    .stChatInput input:focus {
-        outline: none !important;
-        border: none !important;
-        border-radius: 20px !important;
+    
+    .stTextInput > div > div > input:focus {
+        border-color: #C69214 !important;
+        box-shadow: 0 0 0 2px rgba(198, 146, 20, 0.2) !important;
     }
-    .stChatInput textarea:focus {
-        outline: none !important;
-        border: none !important;
-        border-radius: 20px !important;
-    }
-    h1 {
-        color: #235F45 !important;
-        text-align: center !important;
-    }
-    .stMarkdown h1 {
-        color: #235F45 !important;
-        text-align: center !important;
-    }
-    .stBottom {
-        background-color: #4A8B6B !important;
-    }
-    footer {
-        background-color: #4A8B6B !important;
-    }
-    .stApp > footer {
-        background-color: #4A8B6B !important;
-    }
-    .stChatInputContainer {
-        background-color: #4A8B6B !important;
-    }
-    .stChatFloatingInputContainer {
-        background-color: #4A8B6B !important;
-    }
-    section[data-testid="stChatInput"] {
-        background-color: #4A8B6B !important;
-    }
-    div[data-testid="stChatInput"] {
-        background-color: #4A8B6B !important;
-    }
-    .stChatMessage[data-testid="chat-message-assistant"] .stChatMessageAvatar {
-        background-color: #C9931B !important;
-    }
-    .stChatMessage[data-testid="chat-message-assistant"] svg {
+    
+    .stButton > button {
+        background-color: #154734 !important;
         color: white !important;
+        border: none !important;
+        border-radius: 20px !important;
+        padding: 10px 20px !important;
+        font-family: 'Oswald', sans-serif !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        font-size: 12px !important;
+        min-width: 60px !important;
     }
-    div[data-testid="chat-message-assistant"] div[data-testid="chatAvatarIcon-assistant"] {
-        background-color: #C9931B !important;
+    
+    .stButton > button:hover {
+        background-color: #C69214 !important;
     }
-    .stChatMessage .stChatMessageAvatar {
-        background-color: #C9931B !important;
-    }
-    .stForm {
-        max-width: 800px !important;
-        margin: 0 auto !important;
-    }
-    .stForm > div {
-        max-width: 800px !important;
-        margin: 0 auto !important;
+    
+    /* Hide Streamlit elements */
+    .stDeployButton {display: none;}
+    header[data-testid="stHeader"] {display: none;}
+    .stMainBlockContainer {padding: 0 !important;}
+    
+    @media (max-width: 768px) {
+        .stApp {
+            padding: 0;
+            align-items: stretch;
+        }
+        .main-container {
+            max-width: 100%;
+            height: 100vh;
+            border-radius: 0;
+            aspect-ratio: unset;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Simple Authentication
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
+# Initialize session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if not st.session_state.authenticated:
-    st.title("🔐 Login")
-    col1, col2, col3 = st.columns([1,1,1])
-    with col2:
-        st.image("calpoly-logo.png", width=200)
-    
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit = st.form_submit_button("Login")
-        
-        if submit:
-            if username == "student" and password == "calpoly":
-                st.session_state.authenticated = True
-                st.rerun()
-            else:
-                st.error("Invalid credentials. Use: student/calpoly")
-    st.stop()
+# Main container
+st.markdown("""
+<div class="main-container">
+    <div class="header">
+        MR. MINI CLINT BOT
+    </div>
+    <div class="chat-area" id="chat-area">
+""", unsafe_allow_html=True)
 
-AUTHENTICATED = True
+# Display chat history
+for message in st.session_state.messages:
+    if message["role"] == "bot":
+        st.markdown(f"""
+        <div class="bot-message">
+            <div class="avatar">
+                <img src="https://www.calpoly.edu/themes/custom/calpoly/logo.svg" alt="Bot" onerror="this.innerHTML='🤖'">
+            </div>
+            <div class="bot-bubble">{message["content"]}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class="user-message">
+            <div class="avatar">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Mustang_logo_black.svg/512px-Mustang_logo_black.svg.png" alt="User" onerror="this.innerHTML='🐎'">
+            </div>
+            <div class="user-bubble">{message["content"]}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-if AUTHENTICATED == True:
-    # Add centered image at the top
-    col1, col2, col3 = st.columns([1,1,1])
-    with col2:
-        st.image("calpoly-logo.png", width=200)
-    
-    st.title("Cal Poly Math Placement Chatbot")
-    
-    # Logout button
-    if st.button("Logout", type="secondary"):
-        st.session_state.authenticated = False
-        st.session_state.messages = []
-        st.rerun()
+st.markdown("""
+    </div>
+    <div class="input-area">
+""", unsafe_allow_html=True)
 
-    # AWS Setup
-    @st.cache_resource
-    def setup_bedrock():
-        return boto3.client(
-            'bedrock-agent-runtime',
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-            region_name=os.getenv('AWS_DEFAULT_REGION')
-        )
-    
-    # Initialize
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    
-    bedrock = setup_bedrock()
-    kb_id = os.getenv('KNOWLEDGE_BASE_ID')
+# Chat input
+col1, col2 = st.columns([4, 1])
+with col1:
+    user_input = st.text_input("", placeholder="Math ain't mathing? Ask me...", key="chat_input", label_visibility="collapsed")
+with col2:
+    send_button = st.button("SEND")
 
-    # Display chat history
-    for message in st.session_state.messages:
-        if message["role"] == "assistant":
-            with st.chat_message("assistant"):
-                st.write(message["content"])
-        else:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+st.markdown("</div></div>", unsafe_allow_html=True)
+
+# Handle user input
+if (send_button and user_input) or (user_input and user_input != st.session_state.get("last_input", "")):
+    # Add user message
+    st.session_state.messages.append({"role": "user", "content": user_input})
     
-    # Chat input
-    if prompt := st.chat_input("Math ain't mathing? Ask me..."):
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-        
-        # Get AI response
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    # Call Bedrock Knowledge Base
-                    response = bedrock.retrieve_and_generate(
-                        input={
-                            'text': (
-                                "You are a helpful assistant. "
-                                "Always respond in clear, concise sentences. "
-                                "When you use information from the knowledge base, cite it at the end.\n\n"
-                                f"User question: {prompt}"
-                            )
-                        },
-                        retrieveAndGenerateConfiguration={
-                            'type': 'KNOWLEDGE_BASE',
-                            'knowledgeBaseConfiguration': {
-                                'knowledgeBaseId': kb_id,
-                                'modelArn': f'arn:aws:bedrock:us-west-2::foundation-model/{os.getenv("BEDROCK_MODEL_ID")}'
-                            }
-                        }
-                    )
-                    
-                    answer = response['output']['text']
-                    st.write(answer)
-                    
-                    # Add to chat history
-                    st.session_state.messages.append({"role": "assistant", "content": answer})
-                    
-                except Exception as e:
-                    st.error(f"Error: {e}")
-else:
-    st.info("Please login to access the chatbot.")
+    # Add bot response (placeholder)
+    bot_response = f"Let me check on that for you... I see you're asking about '{user_input}'. This is a placeholder response from Mr. Mini Clint Bot!"
+    st.session_state.messages.append({"role": "bot", "content": bot_response})
+    
+    # Update last input
+    st.session_state.last_input = user_input
+    
+    # Rerun to show new messages
+    st.rerun()
